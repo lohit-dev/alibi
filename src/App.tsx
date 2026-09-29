@@ -4,6 +4,7 @@ import { useAppStore } from "./store/app";
 import { asError } from "./lib/utils";
 import { TimesheetCard } from "./components/TimesheetCard";
 import { AnalyticsView } from "./components/AnalyticsView";
+import { ProfileModal } from "./components/ProfileModal";
 import "./App.css";
 
 export default function App() {
@@ -11,8 +12,12 @@ export default function App() {
     () => localStorage.getItem("alibi-theme") === "dark"
   );
   const [analyticsOpen, setAnalyticsOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [initializing, setInitializing] = useState(true);
   const loadJobs = useAppStore((s) => s.loadJobs);
   const loadProfile = useAppStore((s) => s.loadProfile);
+  const profile = useAppStore((s) => s.profile);
+  const jobs = useAppStore((s) => s.jobs);
   const loadDay = useAppStore((s) => s.loadDay);
   const initListener = useAppStore((s) => s.initListener);
   const setError = useAppStore((s) => s.setError);
@@ -23,9 +28,16 @@ export default function App() {
 
   // Initial data load
   useEffect(() => {
-    void loadJobs().catch((e) => setError(asError(e)));
-    void loadProfile().catch((e) => setError(asError(e)));
-  }, []);
+    let active = true;
+    void Promise.all([loadJobs(), loadProfile()])
+      .catch((e) => setError(asError(e)))
+      .finally(() => {
+        if (active) setInitializing(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [loadJobs, loadProfile, setError]);
 
   // Reload day whenever job or date changes
   useEffect(() => {
@@ -101,16 +113,24 @@ export default function App() {
         aria-hidden="true"
       />
       <div className="flex-1 overflow-auto flex flex-col">
-        {analyticsOpen ? (
+        {initializing ? (
+          <div className="boot-screen" aria-label="Opening Alibi" />
+        ) : !profile || jobs.length === 0 ? (
+          <ProfileModal isOpen onClose={() => {}} />
+        ) : analyticsOpen ? (
           <AnalyticsView onBack={() => setAnalyticsOpen(false)} />
         ) : (
           <TimesheetCard
             darkMode={darkMode}
             onToggleTheme={() => setDarkMode((current) => !current)}
             onAnalytics={() => setAnalyticsOpen(true)}
+            onProfile={() => setProfileOpen(true)}
           />
         )}
       </div>
+      {profileOpen && profile && jobs.length > 0 && (
+        <ProfileModal isOpen onClose={() => setProfileOpen(false)} />
+      )}
     </main>
   );
 }

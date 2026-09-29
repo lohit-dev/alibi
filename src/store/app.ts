@@ -27,7 +27,6 @@ type AppStore = {
   error: string;
 
   // ── Actions ───────────────────────────────────────────────────────────────
-  setJobId: (id: string) => void;
   setDate: (date: Date) => void;
   setSegments: (segments: Segment[] | ((prev: Segment[]) => Segment[])) => void;
   setError: (msg: string) => void;
@@ -71,25 +70,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
   dirty: false,
   error: "",
 
-  setJobId: (id) => {
-    const { dirty, jobId, saving } = get();
-    if (saving) return;
-    if (
-      dirty &&
-      id !== jobId &&
-      !window.confirm("Discard unsaved time edits and switch jobs?")
-    )
-      return;
-    set({
-      jobId: id,
-      tasks: [],
-      segments: [],
-      saved: false,
-      dirty: false,
-      history: [],
-      future: [],
-    });
-  },
   setDate: (date) => {
     const { dirty, date: current, saving } = get();
     if (saving) return;
@@ -199,7 +179,9 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
     const job = await api.saveJob({ id: "", name, archived: false });
     const existingTasks = await api.listTasks(job.id);
-    if (!existingTasks.some((task) => task.name.trim().toLocaleLowerCase() === "general")) {
+    if (
+      !existingTasks.some((task) => task.name.trim().toLocaleLowerCase() === "general")
+    ) {
       await api.saveTask({ id: "", job_id: job.id, name: "General", archived: false });
     }
     await get().loadJobs();

@@ -4,8 +4,8 @@ use crate::{
     models::{ExportBundle, Job, Task},
     validation,
 };
-use rusqlite::params;
-use std::{fs, path::Path};
+use rusqlite::{params, OptionalExtension};
+use std::{collections::HashSet, fs, path::Path};
 
 impl Database {
     pub fn export(&self, path: &Path) -> AppResult<()> {
@@ -29,6 +29,26 @@ impl Database {
 
         let mut c = self.conn()?;
         let tx = c.transaction()?;
+        let existing_active_job: Option<String> = tx
+            .query_row(
+                "SELECT id FROM jobs WHERE archived = 0 LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
+            .optional()?;
+        let incoming_active_jobs: HashSet<String> = b
+            .jobs
+            .iter()
+            .filter(|job| !job.archived)
+            .map(|job| job.id.clone())
+            .collect();
+        let canonical_active_job = existing_active_job.or_else(|| {
+            b.jobs
+                .iter()
+                .rev()
+                .find(|job| !job.archived)
+                .map(|job| job.id.clone())
+        });
 
         if let Some(p) = b.profile {
             let start = validation::time(&p.workday_start)
@@ -50,7 +70,12 @@ impl Database {
             )?;
         }
 
-        for j in b.jobs {
+        for mut j in b.jobs {
+            if canonical_active_job.as_deref() == Some(j.id.as_str()) {
+                j.archived = false;
+            } else if !j.archived && canonical_active_job.is_some() {
+                j.archived = true;
+            }
             tx.execute(
                 "INSERT INTO jobs (id, name, archived)
                  VALUES (?1, ?2, ?3)
@@ -62,6 +87,11 @@ impl Database {
         }
 
         for t in b.tasks {
+            let job_id = if incoming_active_jobs.contains(&t.job_id) {
+                canonical_active_job.as_deref().unwrap_or(&t.job_id)
+            } else {
+                &t.job_id
+            };
             tx.execute(
                 "INSERT INTO tasks (id, job_id, name, archived)
                  VALUES (?1, ?2, ?3, ?4)
@@ -69,7 +99,7 @@ impl Database {
                      job_id   = excluded.job_id,
                      name     = excluded.name,
                      archived = excluded.archived",
-                params![t.id, t.job_id, t.name, t.archived as i32],
+                params![t.id, job_id, t.name, t.archived as i32],
             )?;
         }
 

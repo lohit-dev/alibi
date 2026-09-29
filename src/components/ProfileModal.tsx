@@ -11,9 +11,12 @@ interface ProfileModalProps {
 export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const profile = useAppStore((s) => s.profile);
   const jobs = useAppStore((s) => s.jobs);
+  const jobId = useAppStore((s) => s.jobId);
   const loadProfile = useAppStore((s) => s.loadProfile);
   const addJob = useAppStore((s) => s.addJob);
   const clearAllData = useAppStore((s) => s.clearAllData);
+  const currentJob = jobs.find((job) => job.id === jobId);
+  const currentJobName = currentJob?.name ?? "";
 
   const [name, setName] = useState(profile?.name ?? "");
   const [company, setCompany] = useState(profile?.company ?? "");
@@ -35,10 +38,10 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
     setWorkdayStart(profile?.workday_start ?? "09:00 AM");
     setWorkdayEnd(profile?.workday_end ?? "05:00 PM");
     setTimezone(profile?.timezone ?? Intl.DateTimeFormat().resolvedOptions().timeZone);
-    setPrimaryRole("");
+    setPrimaryRole(currentJobName);
     setError("");
     setConfirmClear(false);
-  }, [isOpen]);
+  }, [isOpen, currentJobName]);
 
   if (!isOpen) return null;
   const firstRun = !profile || jobs.length === 0;
@@ -60,10 +63,8 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
-    if (!name.trim() || (needsInitialJob && !primaryRole.trim())) {
-      setError(
-        needsInitialJob ? "Name and primary role are required." : "Name is required."
-      );
+    if (!name.trim() || !primaryRole.trim()) {
+      setError("Name and job title are required.");
       return;
     }
     setError("");
@@ -85,7 +86,11 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         workday_end: normalizedEnd,
         timezone: timezone.trim(),
       });
-      if (needsInitialJob) await addJob(primaryRole.trim());
+      if (currentJob) {
+        await api.saveJob({ ...currentJob, name: primaryRole.trim() });
+      } else {
+        await addJob(primaryRole.trim());
+      }
       await loadProfile();
       onClose();
     } catch (err) {
@@ -152,21 +157,19 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             />
           </div>
 
-          {needsInitialJob && (
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-700">
-                Primary Role / Job
-              </label>
-              <input
-                type="text"
-                required
-                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
-                placeholder="e.g. Staff Frontend Engineer"
-                value={primaryRole}
-                onChange={(e) => setPrimaryRole(e.target.value)}
-              />
-            </div>
-          )}
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-700">
+              Role / job title
+            </label>
+            <input
+              type="text"
+              required
+              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
+              placeholder="e.g. Staff Frontend Engineer"
+              value={primaryRole}
+              onChange={(e) => setPrimaryRole(e.target.value)}
+            />
+          </div>
 
           <div>
             <label className="mb-1 block text-xs font-medium text-gray-700">
@@ -281,9 +284,14 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           <section className="clear-data-dialog">
             <h3 id="clear-data-title">Clear all Alibi data?</h3>
             <p id="clear-data-description">
-              This permanently removes your profile, jobs, tasks, schedules, and all saved time entries from this device.
+              This permanently removes your profile, jobs, tasks, schedules, and all saved
+              time entries from this device.
             </p>
-            {error && <p className="clear-data-error" role="alert">{error}</p>}
+            {error && (
+              <p className="clear-data-error" role="alert">
+                {error}
+              </p>
+            )}
             <div className="clear-data-actions">
               <button
                 type="button"

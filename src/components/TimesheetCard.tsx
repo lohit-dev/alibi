@@ -1,9 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useAppStore } from "../store/app";
 import { displayDate, formatDate, formatDuration } from "../lib/utils";
 import { Timeline } from "./Timeline";
-import { ProfileModal } from "./ProfileModal";
 import { TextInputModal } from "./TextInputModal";
 import { DailySummaryModal } from "./DailySummaryModal";
 import { getEndOfDayStatus } from "../lib/api";
@@ -11,71 +10,23 @@ import { parseTimeInput } from "../lib/utils";
 
 const appWindow = getCurrentWindow();
 
-function JobSelector({
+function CurrentJob({
   jobs,
   value,
-  onChange,
 }: {
   jobs: { id: string; name: string }[];
   value: string;
-  onChange: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
-  const selectorRef = useRef<HTMLDivElement>(null);
   const selectedJob = jobs.find((job) => job.id === value);
 
-  useEffect(() => {
-    if (!open) return;
-    function handlePointerDown(event: PointerEvent) {
-      if (!selectorRef.current?.contains(event.target as Node)) setOpen(false);
-    }
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
-    }
-    document.addEventListener("pointerdown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
   return (
-    <div className="job-selector" ref={selectorRef}>
-      <button
-        type="button"
-        className="job-selector-trigger"
-        role="combobox"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        aria-label="Select job"
-        onClick={() => setOpen((current) => !current)}
-      >
-        <span>{selectedJob?.name ?? "No jobs yet"}</span>
-        <svg viewBox="0 0 20 20" aria-hidden="true">
-          <path d="m5.5 7.5 4.5 4.5 4.5-4.5" />
-        </svg>
-      </button>
-      {open && jobs.length > 0 && (
-        <div className="job-selector-menu" role="listbox" aria-label="Jobs">
-          {jobs.map((job) => (
-            <button
-              type="button"
-              role="option"
-              aria-selected={job.id === value}
-              className={`job-selector-option ${job.id === value ? "is-selected" : ""}`}
-              key={job.id}
-              onClick={() => {
-                onChange(job.id);
-                setOpen(false);
-              }}
-            >
-              {job.name}
-              {job.id === value && <span aria-hidden="true">✓</span>}
-            </button>
-          ))}
-        </div>
-      )}
+    <div
+      className="job-current-value"
+      role="textbox"
+      aria-readonly="true"
+      aria-label="Current job"
+    >
+      {selectedJob?.name ?? "No job set"}
     </div>
   );
 }
@@ -84,39 +35,34 @@ export function TimesheetCard({
   darkMode,
   onToggleTheme,
   onAnalytics,
+  onProfile,
 }: {
   darkMode: boolean;
   onToggleTheme: () => void;
   onAnalytics: () => void;
+  onProfile: () => void;
 }) {
   const jobs = useAppStore((s) => s.jobs);
   const jobId = useAppStore((s) => s.jobId);
   const date = useAppStore((s) => s.date);
   const segments = useAppStore((s) => s.segments);
   const profile = useAppStore((s) => s.profile);
-  const profileLoaded = useAppStore((s) => s.profileLoaded);
   const saving = useAppStore((s) => s.saving);
   const saved = useAppStore((s) => s.saved);
   const dirty = useAppStore((s) => s.dirty);
   const error = useAppStore((s) => s.error);
 
-  const setJobId = useAppStore((s) => s.setJobId);
   const setDate = useAppStore((s) => s.setDate);
   const setSaved = useAppStore((s) => s.setSaved);
   const loadDay = useAppStore((s) => s.loadDay);
   const saveDay = useAppStore((s) => s.saveDay);
   const addTask = useAppStore((s) => s.addTask);
 
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
 
   useEffect(() => {
-    if (profileLoaded && (!profile || jobs.length === 0)) setIsProfileModalOpen(true);
-  }, [profileLoaded, profile, jobs.length]);
-
-  useEffect(() => {
-    if (!profileLoaded || !profile) return;
+    if (!profile) return;
     const endMinute = parseTimeInput(profile.workday_end, true);
     if (endMinute === null) return;
     const checkEndOfDay = async () => {
@@ -140,7 +86,7 @@ export function TimesheetCard({
     void checkEndOfDay();
     const timer = window.setInterval(() => void checkEndOfDay(), 60_000);
     return () => window.clearInterval(timer);
-  }, [profile, profileLoaded]);
+  }, [profile]);
 
   const totalMinutes = segments.reduce(
     (sum, s) => sum + s.end_minute - s.start_minute,
@@ -185,7 +131,7 @@ export function TimesheetCard({
 
   async function handleLockIn() {
     if (!jobId) {
-      setIsProfileModalOpen(true);
+      onProfile();
       return;
     }
     await saveDay();
@@ -238,7 +184,7 @@ export function TimesheetCard({
               <button
                 type="button"
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-[#00775a] text-white text-xs font-semibold shadow-xs hover:ring-2 hover:ring-[#00775a]/30 hover:opacity-95 transition-all cursor-pointer border border-transparent hover:border-white/20 select-none shrink-0"
-                onClick={() => setIsProfileModalOpen(true)}
+                onClick={onProfile}
                 aria-label="Set profile and office hours"
                 title={
                   profile?.name ? `${profile.name} • Profile & Hours` : "Profile & Hours"
@@ -266,17 +212,8 @@ export function TimesheetCard({
           {/* Job + Date row */}
           <div className="flex flex-wrap gap-4">
             <div className="min-w-[240px] flex-1">
-              <label htmlFor="job" className="mb-2 block text-sm font-semibold text-[#444]">
-                Job
-              </label>
-              <JobSelector
-                jobs={jobs}
-                value={jobId}
-                onChange={(id) => {
-                  setJobId(id);
-                  setSaved(false);
-                }}
-              />
+              <label className="mb-2 block text-sm font-semibold text-[#444]">Job</label>
+              <CurrentJob jobs={jobs} value={jobId} />
             </div>
 
             <div className="min-w-[240px] flex-1">
@@ -353,11 +290,6 @@ export function TimesheetCard({
           </div>
         )}
       </div>
-
-      <ProfileModal
-        isOpen={isProfileModalOpen}
-        onClose={() => setIsProfileModalOpen(false)}
-      />
 
       <TextInputModal
         isOpen={isTaskModalOpen}

@@ -114,7 +114,10 @@ export function TimelineRow({
       <div
         className="timeline"
         style={{
-          backgroundImage: `repeating-linear-gradient(90deg, var(--rule) 0 1px, transparent 1px calc(100% / ${totalHours}))`,
+          backgroundImage:
+            "linear-gradient(to right, transparent calc(100% - 1px), var(--sheet-rule) calc(100% - 1px))",
+          backgroundSize: `${100 / totalHours}% 100%`,
+          backgroundRepeat: "repeat-x",
         }}
         onPointerDown={(e) => {
           const bar = (e.target as HTMLElement).closest<HTMLElement>(".bar");

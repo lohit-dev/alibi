@@ -275,7 +275,10 @@ export function Timeline({ onAddTask }: TimelineProps) {
                 + Task
               </button>
             </div>
-            <div className="flex">
+            <div
+              className="grid min-w-0"
+              style={{ gridTemplateColumns: `repeat(${totalHours}, minmax(0, 1fr))` }}
+            >
               {hourLabels.map((label, i) => (
                 <span className="hour-label" key={i}>
                   {label}
@@ -300,8 +303,9 @@ export function Timeline({ onAddTask }: TimelineProps) {
             />
           ))}
 
-          {taskRows.length === 0 && <div className="timeline-empty-space" aria-hidden="true" />}
-
+          {taskRows.length === 0 && (
+            <div className="timeline-empty-space" aria-hidden="true" />
+          )}
         </div>
       </div>
     </div>

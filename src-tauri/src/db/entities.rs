@@ -35,19 +35,22 @@ impl Database {
         if j.id.is_empty() {
             let existing = c
                 .query_row(
-                    "SELECT id, name FROM jobs
-                     WHERE archived = 0 AND lower(trim(name)) = lower(trim(?1))
-                     ORDER BY rowid LIMIT 1",
-                    [j.name.trim()],
+                    "SELECT id, name FROM jobs WHERE archived = 0 LIMIT 1",
+                    [],
                     |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
                 )
                 .optional()?;
             if let Some((id, name)) = existing {
-                return Ok(Job {
-                    id,
-                    name,
-                    archived: false,
-                });
+                if name.eq_ignore_ascii_case(j.name.trim()) {
+                    return Ok(Job {
+                        id,
+                        name,
+                        archived: false,
+                    });
+                }
+                return Err(crate::error::AppError::Validation(
+                    "Alibi supports one active job at a time.".into(),
+                ));
             }
         }
         let id = if j.id.is_empty() {

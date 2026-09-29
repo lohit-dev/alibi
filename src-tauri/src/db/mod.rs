@@ -6,7 +6,7 @@ mod schedule;
 mod stats;
 
 use crate::{error::AppResult, models::TimeEntry, validation};
-use rusqlite::{params, Connection};
+use rusqlite::{params, Connection, OptionalExtension};
 use std::path::PathBuf;
 
 pub struct Database {
@@ -147,9 +147,34 @@ impl Database {
                )",
             [],
         )?;
+        let current_job: Option<String> = tx
+            .query_row(
+                "SELECT id FROM jobs WHERE archived = 0 ORDER BY rowid DESC LIMIT 1",
+                [],
+                |row| row.get(0),
+            )
+            .optional()?;
+        if let Some(current_job) = current_job {
+            tx.execute(
+                "UPDATE tasks SET job_id = ?1
+                 WHERE job_id IN (
+                     SELECT id FROM jobs WHERE archived = 0 AND id <> ?1
+                 )",
+                [&current_job],
+            )?;
+            tx.execute(
+                "UPDATE jobs SET archived = 1 WHERE archived = 0 AND id <> ?1",
+                [&current_job],
+            )?;
+        }
         tx.execute(
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_jobs_active_name
              ON jobs(lower(trim(name))) WHERE archived = 0",
+            [],
+        )?;
+        tx.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_single_active_job
+             ON jobs(archived) WHERE archived = 0",
             [],
         )?;
         tx.commit()?;

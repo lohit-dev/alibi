@@ -18,3 +18,7 @@ Your data stays in a SQLite database on your computer. Alibi needs no account or
 bun install
 bun run tauri dev
 ```
+
+## License
+
+MIT. See [LICENSE](LICENSE).

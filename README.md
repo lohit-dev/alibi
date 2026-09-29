@@ -1,22 +1,20 @@
 # Alibi
 
-Alibi is a private desktop time and schedule manager for personal work. It is designed for people who want a simple place to record what they worked on, plan upcoming meetings or tasks, and understand where their time goes.
+Alibi is a private desktop work ledger. Record what you worked on each day, then use those records to prepare a clear summary for performance reviews.
 
-The app keeps the workflow deliberately small: choose a job, enter time against a task, submit the week, and review daily or monthly totals. It is not an invoicing platform, team tracker, or cloud service.
+## What it does
 
-## Why Alibi
+- Log time by task on a daily timeline.
+- Review effort and focus across a selected period.
+- Copy an email-ready work summary or export your records as JSON.
 
-Work notes and time records are often scattered across calendars, documents, and messaging tools. Alibi brings the useful parts together in one calm, local-first workspace:
+## Local-first
 
-- Record time by job, task, and day.
-- Review a weekly timesheet before submitting it.
-- Schedule meetings, reminders, and personal work tasks.
-- See daily, weekly, and monthly time statistics.
-- Get an end-of-day view of logged time compared with configured office hours.
-- Surface today’s work, open items, and upcoming schedule in a widget-ready dashboard.
+Your data stays in a SQLite database on your computer. Alibi needs no account or network connection. Export a JSON backup whenever you need one.
 
-## Local-first by design
+## Run locally
 
-All data is stored in a SQLite database on the user’s computer. Alibi does not require an account, send time records to a server, or depend on a network connection.
-
-Profiles can be exported to a portable JSON file and imported later, making it easy to keep a personal backup or move to another computer.
+```sh
+bun install
+bun run tauri dev
+```

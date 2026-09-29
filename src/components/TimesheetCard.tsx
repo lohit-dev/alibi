@@ -148,7 +148,7 @@ export function TimesheetCard({
 
   return (
     <>
-      <div className="flex min-h-screen w-full flex-col justify-between p-6 sm:p-8">
+      <div className="flex min-h-full w-full flex-col justify-between px-6 py-4 sm:px-8 sm:py-5">
         <div className="flex flex-col gap-6">
           {/* Header */}
           <div className="flex select-none items-center justify-between gap-4">

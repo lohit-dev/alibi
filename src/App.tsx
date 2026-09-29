@@ -109,7 +109,7 @@ export default function App() {
     <main className="app-shell h-screen w-screen flex flex-col overflow-hidden rounded-[24px]">
       <div
         data-tauri-drag-region
-        className="window-drag-strip h-8 w-full shrink-0"
+        className="window-drag-strip h-4 w-full shrink-0"
         aria-hidden="true"
       />
       <div className="flex-1 overflow-auto flex flex-col">

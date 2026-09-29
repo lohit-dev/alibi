@@ -561,7 +561,7 @@ html[data-theme="dark"] select {
   box-sizing: border-box;
   min-height: 100%;
   width: 100%;
-  padding: 30px clamp(22px, 5vw, 64px) 48px;
+  padding: 18px clamp(22px, 5vw, 64px) 64px;
   color: var(--ink);
   background: var(--surface);
   font-family: var(--font-sans);

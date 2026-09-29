@@ -191,18 +191,16 @@ body {
   margin-bottom: 34px;
 }
 .onboarding-wordmark {
-  display: grid;
   width: 48px;
   height: 48px;
   flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid var(--rule);
-  border-radius: 16px;
-  color: var(--on-accent);
-  background: var(--accent);
-  font-size: 23px;
-  font-weight: 600;
-  letter-spacing: -0.06em;
+  object-fit: contain;
+}
+.alibi-mark-image {
+  transition: filter 160ms var(--motion-standard);
+}
+html[data-theme="dark"] .alibi-mark-image {
+  filter: invert(1);
 }
 .onboarding-kicker {
   margin: 0 0 8px;
@@ -329,8 +327,6 @@ body {
   .onboarding-wordmark {
     width: 40px;
     height: 40px;
-    border-radius: 13px;
-    font-size: 20px;
   }
   .onboarding-field-grid,
   .onboarding-hours {

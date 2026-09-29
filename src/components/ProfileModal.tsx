@@ -134,9 +134,12 @@ export function ProfileModal({
       >
         {isPage && (
           <header className="onboarding-heading">
-            <div className="onboarding-wordmark" aria-label="Alibi">
-              A
-            </div>
+            <img
+              className="onboarding-wordmark alibi-mark-image"
+              src="/alibi-mark.svg"
+              alt="Alibi"
+              draggable={false}
+            />
             <div>
               <p className="onboarding-kicker">Your private work ledger</p>
               <h1 id="profile-modal-title">Set up your workday</h1>

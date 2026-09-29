@@ -157,6 +157,14 @@ export function TimesheetCard({
               onMouseDown={handleHeaderMouseDown}
               className="flex-1 flex items-center py-1 cursor-default"
             >
+              <img
+                src="/alibi-mark.svg"
+                alt=""
+                aria-hidden="true"
+                data-tauri-drag-region
+                className="alibi-mark-image mr-2 h-8 w-8 shrink-0"
+                draggable={false}
+              />
               <h1
                 data-tauri-drag-region
                 className="m-0 text-[21px] font-semibold tracking-[-0.025em] leading-tight text-[#111]"

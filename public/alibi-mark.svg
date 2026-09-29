@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect x="32" y="36" width="445" height="445" rx="98" fill="#1B1B1B" />
+  <g fill="#FCFCFC" transform="translate(111 115) scale(4.3)">
+    <path fill-rule="evenodd" d="M26 7a19 19 0 1 0 0 38a19 19 0 1 0 0-38zM26 12a14 14 0 1 1 0 28a14 14 0 1 1 0-28z" />
+    <polygon points="38.47,33.53 33.53,38.47 54.53,59.47 59.47,54.53" />
+    <rect x="12" y="25" width="28" height="2" />
+    <rect x="16" y="23" width="14" height="6" />
+  </g>
+</svg>

@@ -3,6 +3,7 @@ import { save as chooseSavePath } from "@tauri-apps/plugin-dialog";
 import { exportProfile, getDailyStatistics, getPeriodStatistics } from "../lib/api";
 import { asError, formatDate, formatDuration } from "../lib/utils";
 import { useAppStore } from "../store/app";
+import { DateRangePicker } from "./DateRangePicker";
 import type { DailyStatistics, PeriodStatistics } from "../types";
 
 type Scope = "day" | "week" | "month" | "six-months" | "year" | "custom";
@@ -250,26 +251,12 @@ export function AnalyticsView({ onBack }: { onBack: () => void }) {
         <span>Calculated from the local ledger</span>
       </nav>
       {scope === "custom" && (
-        <div className="custom-range">
-          <label>
-            From{" "}
-            <input
-              type="date"
-              value={customStart}
-              max={customEnd || undefined}
-              onChange={(event) => setCustomStart(event.target.value)}
-            />
-          </label>
-          <label>
-            To{" "}
-            <input
-              type="date"
-              value={customEnd}
-              min={customStart || undefined}
-              onChange={(event) => setCustomEnd(event.target.value)}
-            />
-          </label>
-        </div>
+        <DateRangePicker
+          start={customStart}
+          end={customEnd}
+          onStartChange={setCustomStart}
+          onEndChange={setCustomEnd}
+        />
       )}
       {loading ? (
         <p className="analytics-empty">Reading local ledger…</p>

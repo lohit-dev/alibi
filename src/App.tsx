@@ -116,7 +116,7 @@ export default function App() {
         {initializing ? (
           <div className="boot-screen" aria-label="Opening Alibi" />
         ) : !profile || jobs.length === 0 ? (
-          <ProfileModal isOpen onClose={() => {}} />
+          <ProfileModal isOpen onClose={() => {}} presentation="page" />
         ) : analyticsOpen ? (
           <AnalyticsView onBack={() => setAnalyticsOpen(false)} />
         ) : (

@@ -6,9 +6,14 @@ import { asError, parseTimeInput, formatTime12h } from "../lib/utils";
 interface ProfileModalProps {
   isOpen: boolean;
   onClose: () => void;
+  presentation?: "modal" | "page";
 }
 
-export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
+export function ProfileModal({
+  isOpen,
+  onClose,
+  presentation = "modal",
+}: ProfileModalProps) {
   const profile = useAppStore((s) => s.profile);
   const jobs = useAppStore((s) => s.jobs);
   const jobId = useAppStore((s) => s.jobId);
@@ -45,6 +50,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   if (!isOpen) return null;
   const firstRun = !profile || jobs.length === 0;
+  const isPage = presentation === "page";
   const needsInitialJob = jobs.length === 0;
 
   async function handleClearAllData() {
@@ -102,9 +108,12 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
-      role="dialog"
-      aria-modal="true"
+      className={
+        isPage
+          ? "onboarding-screen"
+          : "fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      }
+      {...(!isPage ? { role: "dialog", "aria-modal": true } : {})}
       aria-labelledby="profile-modal-title"
       onKeyDown={(event) => {
         if (event.key === "Escape" && !firstRun) {
@@ -113,14 +122,38 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
         }
       }}
       onClick={(e) => {
-        if (!firstRun && e.target === e.currentTarget) onClose();
+        if (!isPage && !firstRun && e.target === e.currentTarget) onClose();
       }}
     >
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="mb-4 flex items-center justify-between">
-          <h2 id="profile-modal-title" className="text-lg font-semibold text-gray-900">
-            {firstRun ? "Set Up Your Alibi" : "Work Profile & Hours"}
-          </h2>
+      <section
+        className={
+          isPage
+            ? "onboarding-panel"
+            : "w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        }
+      >
+        {isPage && (
+          <header className="onboarding-heading">
+            <div className="onboarding-wordmark" aria-label="Alibi">
+              A
+            </div>
+            <div>
+              <p className="onboarding-kicker">Your private work ledger</p>
+              <h1 id="profile-modal-title">Set up your workday</h1>
+              <p className="onboarding-intro">
+                Set the details and hours Alibi should use for your daily record.
+              </p>
+            </div>
+          </header>
+        )}
+        <div
+          className={`mb-4 flex items-center justify-between ${isPage ? "onboarding-form-heading" : ""}`}
+        >
+          {!isPage && (
+            <h2 id="profile-modal-title" className="text-lg font-semibold text-gray-900">
+              Work Profile &amp; Hours
+            </h2>
+          )}
           {!firstRun && (
             <button
               type="button"
@@ -136,55 +169,60 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
           )}
         </div>
 
-        {firstRun && (
+        {firstRun && !isPage && (
           <p className="-mt-2 mb-4 text-sm text-gray-500">
             Calibrate your daily timeline to match your working hours.
           </p>
         )}
 
-        <form onSubmit={(e) => void handleSubmit(e)} className="flex flex-col gap-4">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">
-              Full Name
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
-              placeholder="e.g. Alex Smith"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-            />
+        <form
+          onSubmit={(e) => void handleSubmit(e)}
+          className={isPage ? "onboarding-form" : "flex flex-col gap-4"}
+        >
+          <div className={isPage ? "onboarding-field-grid" : "contents"}>
+            <div className="profile-field">
+              <label className="mb-1 block text-xs font-medium text-gray-700">
+                Full Name
+              </label>
+              <input
+                type="text"
+                required
+                className="profile-field-input"
+                placeholder="e.g. Alex Smith"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+
+            <div className="profile-field">
+              <label className="mb-1 block text-xs font-medium text-gray-700">
+                Role / job title
+              </label>
+              <input
+                type="text"
+                required
+                className="profile-field-input"
+                placeholder="e.g. Staff Frontend Engineer"
+                value={primaryRole}
+                onChange={(e) => setPrimaryRole(e.target.value)}
+              />
+            </div>
           </div>
 
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-700">
-              Role / job title
-            </label>
-            <input
-              type="text"
-              required
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
-              placeholder="e.g. Staff Frontend Engineer"
-              value={primaryRole}
-              onChange={(e) => setPrimaryRole(e.target.value)}
-            />
-          </div>
-
-          <div>
+          <div className={`profile-field ${isPage ? "onboarding-company" : ""}`}>
             <label className="mb-1 block text-xs font-medium text-gray-700">
               Company (optional)
             </label>
             <input
               type="text"
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="profile-field-input"
               placeholder="e.g. Acme Corp"
               value={company}
               onChange={(e) => setCompany(e.target.value)}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className={`profile-hours-grid ${isPage ? "onboarding-hours" : ""}`}>
             <div>
               <label className="mb-1 block text-xs font-medium text-gray-700">
                 Workday Start (12h)
@@ -192,7 +230,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               <input
                 type="text"
                 required
-                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="profile-field-input"
                 placeholder="09:00 AM"
                 value={workdayStart}
                 onChange={(e) => setWorkdayStart(e.target.value)}
@@ -210,7 +248,7 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
               <input
                 type="text"
                 required
-                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
+                className="profile-field-input"
                 placeholder="05:00 PM"
                 value={workdayEnd}
                 onChange={(e) => setWorkdayEnd(e.target.value)}
@@ -223,26 +261,27 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             </div>
           </div>
 
-          <div>
+          <div className={`profile-field ${isPage ? "onboarding-timezone" : ""}`}>
             <label className="mb-1 block text-xs font-medium text-gray-700">
               Timezone
             </label>
             <input
               type="text"
               required
-              className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm outline-none"
+              className="profile-field-input"
               value={timezone}
               onChange={(e) => setTimezone(e.target.value)}
             />
           </div>
-
           {error && (
             <div className="text-xs text-red-600" role="alert">
               {error}
             </div>
           )}
 
-          <div className="mt-2 flex justify-end gap-3">
+          <div
+            className={`mt-2 flex justify-end gap-3 ${isPage ? "onboarding-actions" : ""}`}
+          >
             {!firstRun && (
               <button
                 type="button"
@@ -252,16 +291,12 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                 Cancel
               </button>
             )}
-            <button
-              type="submit"
-              disabled={saving}
-              className="rounded-xl bg-[#00775a] px-5 py-2 text-sm font-medium text-white hover:bg-[#00664d] disabled:opacity-50"
-            >
-              {saving ? "Saving…" : "Save Profile"}
+            <button type="submit" disabled={saving} className="profile-submit">
+              {saving ? "Saving…" : isPage ? "Start my ledger" : "Save profile"}
             </button>
           </div>
         </form>
-      </div>
+      </section>
       {confirmClear && (
         <div
           className="clear-data-backdrop"

@@ -1,0 +1,89 @@
+name: Build and publish prerelease
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build on ${{ matrix.platform }} (${{ matrix.args || 'native' }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            args: --target aarch64-apple-darwin
+            apple_signing_identity: "-"
+          - platform: macos-latest
+            args: --target x86_64-apple-darwin
+            apple_signing_identity: "-"
+          - platform: ubuntu-22.04
+            args: ""
+            apple_signing_identity: ""
+          - platform: windows-latest
+            args: ""
+            apple_signing_identity: ""
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install Linux build dependencies
+        if: matrix.platform == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential curl file libayatana-appindicator3-dev \
+            libfuse2 libssl-dev libwebkit2gtk-4.1-dev libxdo-dev \
+            librsvg2-dev patchelf wget
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.platform == 'macos-latest' && 'aarch64-apple-darwin,x86_64-apple-darwin' || '' }}
+
+      - name: Cache Rust build artifacts
+        uses: swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build and upload bundles
+        uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # action-v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          APPLE_SIGNING_IDENTITY: ${{ matrix.apple_signing_identity }}
+        with:
+          tagName: ${{ github.ref_name }}
+          releaseName: Alibi ${{ github.ref_name }} Preview
+          releaseBody: |
+            Early preview build of Alibi. Your ledger data remains on your device.
+
+            Windows installers are unsigned and may show a SmartScreen warning. The macOS build is ad-hoc signed but not notarized; macOS may require approval in Privacy & Security.
+
+            Choose the installer for your system: Windows `.exe` or `.msi`, macOS `.dmg`, or Linux `.AppImage`, `.deb`, or `.rpm`.
+          releaseDraft: true
+          prerelease: true
+          generateReleaseNotes: true
+          args: ${{ matrix.args }}
+
+  publish:
+    name: Publish prerelease
+    needs: build
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Publish the completed draft
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          release_id=$(gh release view "$RELEASE_TAG" --json databaseId --jq .databaseId)
+          gh api --method PATCH "repos/$GH_REPO/releases/$release_id" -F draft=false

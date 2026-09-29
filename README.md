@@ -19,6 +19,8 @@ bun install
 bun run tauri dev
 ```
 
+Preview installers are published in [GitHub Releases](https://github.com/lohit-dev/alibi/releases).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

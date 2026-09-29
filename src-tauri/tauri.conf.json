@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "alibi",
+  "productName": "Alibi",
   "version": "0.1.0",
   "identifier": "com.kinggrey.alibi",
   "build": {
@@ -32,6 +32,12 @@
   },
   "bundle": {
     "active": true,
+    "category": "Productivity",
+    "copyright": "Copyright © 2026 lohit-dev",
+    "longDescription": "Record daily work and build appraisal evidence. Stored locally in SQLite.",
+    "license": "MIT",
+    "licenseFile": "../LICENSE",
+    "shortDescription": "Private local-first work ledger.",
     "targets": "all",
     "icon": [
       "icons/32x32.png",

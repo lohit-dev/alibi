@@ -21,6 +21,14 @@ bun run tauri dev
 
 Preview installers are published in [GitHub Releases](https://github.com/lohit-dev/alibi/releases).
 
+On 64-bit Linux, install the latest preview with:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/lohit-dev/alibi/master/install.sh | sh
+```
+
+The installer places Alibi in your user account; it does not need `sudo`. macOS and Windows installers are available on the Releases page.
+
 ## License
 
 MIT. See [LICENSE](LICENSE).

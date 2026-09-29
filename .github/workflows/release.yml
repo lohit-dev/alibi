@@ -1,9 +1,8 @@
 name: Build and publish prerelease
 
 on:
-  push:
-    tags:
-      - "v*"
+  release:
+    types: [published]
 
 permissions:
   contents: write
@@ -22,8 +21,6 @@ jobs:
             args: --target x86_64-apple-darwin
             apple_signing_identity: "-"
           - platform: ubuntu-22.04
-            # Tauri's linuxdeploy AppImage step currently fails on GitHub's Ubuntu runner.
-            # Ship native Linux packages while that upstream bundler issue is unresolved.
             args: --bundles deb,rpm
             apple_signing_identity: ""
           - platform: windows-latest
@@ -71,7 +68,7 @@ jobs:
             Windows installers are unsigned and may show a SmartScreen warning. The macOS build is ad-hoc signed but not notarized; macOS may require approval in Privacy & Security.
 
             Choose the installer for your system: Windows `.exe` or `.msi`, macOS `.dmg`, or Linux `.deb` or `.rpm`.
-          releaseDraft: true
+          releaseDraft: false
           prerelease: true
           generateReleaseNotes: true
           args: ${{ matrix.args }}
